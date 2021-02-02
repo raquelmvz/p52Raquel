@@ -27,6 +27,65 @@ public class EmpresaAlquilerVehiculos {
 
     }
 
+    //Const param
+    EmpresaAlquilerVehiculos(String cif, String nombre, String paginaWeb) {
+        this.cif = cif;
+        this.nombre = nombre;
+        this.paginaWeb = paginaWeb;
+        this.clientes = new ArrayList<>();
+        this.vehiculos = new ArrayList<>();
+        this.alquilados = new ArrayList<>();
+    }
+
+    //getters y setters
+    public ArrayList<Vehiculo> getVehiculos() {
+        return vehiculos;
+    }
+
+    public void setVehiculos(ArrayList<Vehiculo> vehiculos) {
+        this.vehiculos = vehiculos;
+    }
+
+    public ArrayList<Cliente> getClientes() {
+        return clientes;
+    }
+
+    public void setClientes(ArrayList<Cliente> clientes) {
+        this.clientes = clientes;
+    }
+
+    public ArrayList<VehiculoAlquilado> getAlquilados() {
+        return alquilados;
+    }
+
+    public void setAlquilados(ArrayList<VehiculoAlquilado> alquilados) {
+        this.alquilados = alquilados;
+    }
+
+    public String getCif() {
+        return cif;
+    }
+
+    public void setCif(String cif) {
+        this.cif = cif;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getPaginaWeb() {
+        return paginaWeb;
+    }
+
+    public void setPaginaWeb(String paginaWeb) {
+        this.paginaWeb = paginaWeb;
+    }
+
     //Devuelve el numero de clientes
     public int totalClientes() {
         return clientes.size();
@@ -42,16 +101,6 @@ public class EmpresaAlquilerVehiculos {
         return alquilados.size();
     }
 
-    //Const param
-    EmpresaAlquilerVehiculos(String cif, String nombre, String paginaWeb) {
-        this.cif = cif;
-        this.nombre = nombre;
-        this.paginaWeb = paginaWeb;
-        this.clientes = new ArrayList<>();
-        this.vehiculos = new ArrayList<>();
-        this.alquilados = new ArrayList<>();
-    }
-
     //Para registrar a un cliente
     public void registrarCliente(Cliente cliente) {
         clientes.add(cliente);
@@ -62,22 +111,16 @@ public class EmpresaAlquilerVehiculos {
         vehiculos.add(vehiculo);
     }
 
-    //para añadir los alquileres
-    public void registrarAlquiler(VehiculoAlquilado vehiculo) {
-        alquilados.add(vehiculo);
-    }
-
-    //Lista de los alquileres
-    //Comprobar primero si existen alquileres
-    public void listaAlquilados() {
-
-        if (alquilados.isEmpty()) {
-            System.out.println("No existen alquileres");
-        } else {
-            for (int i = 0; i < alquilados.size(); i++) {
-                System.out.println(alquilados.get(i));
-            }
+    //para registrar el alquiler
+    public void registrarAlquiler(String nif, String matricula, int dias) {
+        if (buscarPorNif(nif) >= 0 && buscarVehiculo(matricula) >= 0) {
+            alquilados.add(new VehiculoAlquilado(clientes.get(buscarPorNif(nif)), vehiculos.get(buscarVehiculo(matricula)), LocalDate.now(), dias));
         }
+
+        //una vez gestionamos el alquiler el coche debe ponerse como
+        //no disponible
+        vehiculos.get(buscarVehiculo(matricula)).setDisponible(false);
+
     }
 
     //ordenar por nif
@@ -86,22 +129,29 @@ public class EmpresaAlquilerVehiculos {
         Collections.sort(clientes, criterio);
     }
 
+    //ordenar por matricula
+    public void ordenarPorMatricula() {
+        Comparator<Vehiculo> criterio = (c1, c2) -> c1.getMatricula().compareTo(c2.getMatricula());
+        Collections.sort(vehiculos, criterio);
+    }
+
     //buscar por nif
-    public int buscarPorNif(Cliente cliente) {
+    public int buscarPorNif(String nif) {
+        //para el binary search hay que ordenar primero
+        ordenarPorNif();
+        //creamos un cleinte con el nif a buscar para compararlo luego en la busqueda
+        Cliente cliente = new Cliente(nif, "", "");
         Comparator<Cliente> criterio = (c1, c2) -> c1.getNif().compareTo(c2.getNif());
         int pos = Collections.binarySearch(clientes, cliente, criterio);
 
         return pos;
     }
 
-    //imprimir los datos de clientes
-    public void imprimirClientes() {
-
-        clientes.forEach(System.out::println);
-    }
-
     //para buscar un vehiculo dada la matricula
+    //sin binary search
+    //uso de comparetoignorecase
     public int buscarVehiculo(String matricula) {
+        ordenarPorMatricula();
 
         int pos = 0;
 
@@ -117,9 +167,28 @@ public class EmpresaAlquilerVehiculos {
         return -1;
     }
 
+    //imprimir los datos de clientes
+    public void imprimirClientes() {
+
+        clientes.forEach(System.out::println);
+    }
+
     //para imprimir los vehiculos
     public void imprimirVehiculos() {
         vehiculos.forEach(System.out::println);
+    }
+
+    //Lista de los alquileres
+    //Comprobar primero si existen alquileres
+    public void listaAlquilados() {
+
+        if (alquilados.isEmpty()) {
+            System.out.println("No existen alquileres");
+        } else {
+            for (int i = 0; i < alquilados.size(); i++) {
+                System.out.println(alquilados.get(i));
+            }
+        }
     }
 
     //para modificar la disponibilidad del vehiculo
